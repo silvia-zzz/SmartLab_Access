@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "SmartLab_Access"
+version = "0.1.0"
+description = "Algorand smart contracts"
+authors = ["Silvia <zhuwenwen761265313@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+algokit-utils = "^4.0.0"
+python-dotenv = "^1.0.0"
+algorand-python = "^3"
+algorand-python-testing = "^1"
+cryptography = "^50.0.2"
+
+[tool.poetry.group.dev.dependencies]
+algokit-client-generator = "^2.1.0"
+puyapy = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+

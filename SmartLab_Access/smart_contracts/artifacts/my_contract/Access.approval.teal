@@ -1,0 +1,1869 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 1 8 0 40
+    bytecblock 0x01 0x72 0x6c 0x00 0x0000000000000000 "admin" 0x151f7c75 "seq" 0x05
+    txn ApplicationID
+    bnz main_after_if_else@2
+    // smart_contracts/my_contract/storage.py:16
+    // self.admin = Account()
+    bytec 5 // "admin"
+    global ZeroAddress
+    app_global_put
+    // smart_contracts/my_contract/storage.py:17
+    // self.seq = UInt64(0)
+    bytec 7 // "seq"
+    intc_2 // 0
+    app_global_put
+
+main_after_if_else@2:
+    // smart_contracts/my_contract/contract.py:6
+    // class Access(Requests):
+    pushbytes 0xa0e81872 // method "update()void"
+    txna ApplicationArgs 0
+    match main_update_route@4
+
+main_switch_case_next@5:
+    // smart_contracts/my_contract/contract.py:6
+    // class Access(Requests):
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    bz main_create_NoOp@23
+    pushbytess 0xb3e80760 0x00486f3b 0x611363f1 0x376f446d 0xc66dee41 0x66b104d8 0x575088fd 0xfaf5db14 0xbe285a2e 0xb5ff32a3 0x7eaf6db7 0xfc6d9133 0xe55a5eac 0xf2fe515b 0x3223f986 // method "request(uint64,uint64,uint64,pay)uint64", method "req_cost(uint64,address,uint64,uint64)uint64", method "approve(uint64,uint64,uint64)void", method "reject(uint64)void", method "revoke(uint64)void", method "use(uint64)void", method "expire(uint64)void", method "get_req(uint64)(uint64,address,uint64,uint64,uint64,uint64,uint8,uint64,uint64)", method "register_lab(uint64,pay)void", method "lab_cost()uint64", method "review_lab(uint64,bool)void", method "register_lock(uint64,uint64,pay)void", method "lock_cost()uint64", method "set_active(uint64,bool)void", method "get_lab(uint64)(uint64,address,uint64,uint8,uint64,uint8)"
+    txna ApplicationArgs 0
+    match request req_cost approve reject revoke use expire get_req register_lab lab_cost review_lab register_lock lock_cost set_active get_lab
+    err
+
+main_create_NoOp@23:
+    // smart_contracts/my_contract/contract.py:6
+    // class Access(Requests):
+    pushbytes 0x4c5c61ba // method "create()void"
+    txna ApplicationArgs 0
+    match create
+    err
+
+main_update_route@4:
+    // smart_contracts/my_contract/contract.py:21
+    // @arc4.abimethod(create="disallow", allow_actions=["UpdateApplication"])
+    txn OnCompletion
+    pushint 4 // UpdateApplication
+    ==
+    txn ApplicationID
+    &&
+    assert
+    b update
+
+
+// smart_contracts.my_contract.contract.Access.create[routing]() -> void:
+create:
+    // smart_contracts/my_contract/contract.py:18
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/contract.py:19
+    // self.admin = Txn.sender
+    bytec 5 // "admin"
+    txn Sender
+    app_global_put
+    // smart_contracts/my_contract/contract.py:12
+    // @arc4.abimethod(create="require")
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.contract.Access.update[routing]() -> void:
+update:
+    // smart_contracts/my_contract/contract.py:24
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/contract.py:25
+    // assert Txn.sender == self.admin, "Amministratore non autorizzato"
+    txn Sender
+    intc_2 // 0
+    bytec 5 // "admin"
+    app_global_get_ex
+    assert // check self.admin exists
+    ==
+    assert // Amministratore non autorizzato
+    // smart_contracts/my_contract/contract.py:21
+    // @arc4.abimethod(create="disallow", allow_actions=["UpdateApplication"])
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.requests.Requests.request[routing]() -> void:
+request:
+    intc_2 // 0
+    // smart_contracts/my_contract/requests.py:16
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dupn 2
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    cover 2
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 3
+    dup
+    cover 3
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txn GroupIndex
+    intc_0 // 1
+    -
+    dup
+    cover 4
+    gtxns TypeEnum
+    intc_0 // pay
+    ==
+    assert // transaction type is pay
+    // smart_contracts/my_contract/requests.py:32
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/requests.py:33
+    // lab = self._lab(lab_id.as_uint64())
+    dig 2
+    btoi
+    callsub _lab
+    // smart_contracts/my_contract/requests.py:35
+    // self._available(lab)
+    callsub _available
+    pop
+    // smart_contracts/my_contract/requests.py:36
+    // assert start >= Global.latest_timestamp, \
+    global LatestTimestamp
+    itob
+    dig 2
+    b<=
+    // smart_contracts/my_contract/requests.py:36-37
+    // assert start >= Global.latest_timestamp, \
+    //     "Inizio nel passato"
+    assert // Inizio nel passato
+    // smart_contracts/my_contract/requests.py:38
+    // assert end > start, "Intervallo non valido"
+    dup
+    dig 2
+    b>
+    assert // Intervallo non valido
+    // smart_contracts/my_contract/requests.py:39
+    // assert (end.as_uint64() - start.as_uint64()) % 3600 == 0, \
+    dup
+    btoi
+    dig 2
+    btoi
+    -
+    pushint 3600
+    %
+    !
+    // smart_contracts/my_contract/requests.py:39-40
+    // assert (end.as_uint64() - start.as_uint64()) % 3600 == 0, \
+    //     "Durata non espressa in ore intere"
+    assert // Durata non espressa in ore intere
+    // smart_contracts/my_contract/requests.py:42
+    // current_user = arc4.Address(Txn.sender)
+    txn Sender
+    dup
+    cover 4
+    // smart_contracts/my_contract/requests.py:240
+    // return user.bytes + lab_id.bytes + start.bytes + end.bytes
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    // smart_contracts/my_contract/requests.py:44
+    // prev_id = self.slots.get(key, default=UInt64(0))
+    pushbytes 0x6f
+    swap
+    concat
+    dup
+    box_get
+    swap
+    btoi
+    intc_2 // 0
+    swap
+    uncover 2
+    select
+    dup
+    // smart_contracts/my_contract/requests.py:46-47
+    // # Caso della richiesta dell'utente per lo stesso laboratorio e intervallo di tempo
+    // if prev_id:
+    bz request_after_if_else@7
+    // smart_contracts/my_contract/requests.py:48
+    // prev = self._req(prev_id)
+    dup
+    callsub _req
+    // smart_contracts/my_contract/requests.py:49
+    // assert (prev.status != REQ_PENDING and prev.status != REQ_APPROVED), \
+    extract 72 1
+    dup
+    bury 9
+    bytec_3 // 0x00
+    b!=
+    bz request_bool_false@5
+    dig 7
+    bytec_0 // 0x01
+    b!=
+    bz request_bool_false@5
+    intc_0 // 1
+
+request_bool_merge@6:
+    // smart_contracts/my_contract/requests.py:49-50
+    // assert (prev.status != REQ_PENDING and prev.status != REQ_APPROVED), \
+    //     "Richiesta duplicata"
+    assert // Richiesta duplicata
+
+request_after_if_else@7:
+    // smart_contracts/my_contract/requests.py:52
+    // prev_min_balance = Global.current_application_address.min_balance
+    global CurrentApplicationAddress
+    acct_params_get AcctMinBalance
+    assert // account funded
+    // smart_contracts/my_contract/requests.py:53
+    // self.seq += 1
+    intc_2 // 0
+    bytec 7 // "seq"
+    app_global_get_ex
+    assert // check self.seq exists
+    intc_0 // 1
+    +
+    bytec 7 // "seq"
+    dig 1
+    app_global_put
+    // smart_contracts/my_contract/requests.py:55
+    // assert req_id not in self.reqs, "Identificativo gia assegnato"
+    itob
+    bytec_1 // 0x72
+    dig 1
+    concat
+    dup
+    box_len
+    bury 1
+    !
+    assert // Identificativo gia assegnato
+    // smart_contracts/my_contract/requests.py:63
+    // arc4.UInt64(Global.latest_timestamp),
+    global LatestTimestamp
+    itob
+    // smart_contracts/my_contract/requests.py:57-67
+    // self.reqs[req_id] = Request(
+    //     arc4.UInt64(req_id),
+    //     current_user,
+    //     lab_id,
+    //     start,
+    //     end,
+    //     arc4.UInt64(Global.latest_timestamp),
+    //     arc4.UInt8(REQ_PENDING),
+    //     arc4.UInt64(0),
+    //     arc4.UInt64(0),
+    // )
+    dig 2
+    dig 7
+    concat
+    dig 11
+    concat
+    dig 10
+    concat
+    dig 9
+    concat
+    swap
+    concat
+    pushbytes 0x0000000000000000000000000000000000
+    concat
+    box_put
+    // smart_contracts/my_contract/requests.py:68
+    // self.slots[key] = req_id
+    dig 3
+    dig 1
+    box_put
+    // smart_contracts/my_contract/requests.py:69
+    // self._pay(pay, Global.current_application_address.min_balance - prev_min_balance)
+    global CurrentApplicationAddress
+    acct_params_get AcctMinBalance
+    assert // account funded
+    uncover 2
+    -
+    dig 5
+    swap
+    callsub _pay
+    // smart_contracts/my_contract/requests.py:16
+    // @arc4.abimethod
+    bytec 6 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return
+
+request_bool_false@5:
+    intc_2 // 0
+    b request_bool_merge@6
+
+
+// smart_contracts.my_contract.requests.Requests.req_cost[routing]() -> void:
+req_cost:
+    // smart_contracts/my_contract/requests.py:73
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 3
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 4
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/my_contract/requests.py:88
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/requests.py:89
+    // assert lab_id.as_uint64() in self.labs, "Laboratorio inesistente"
+    dig 3
+    btoi
+    itob
+    bytec_2 // 0x6c
+    swap
+    concat
+    box_len
+    bury 1
+    assert // Laboratorio inesistente
+    // smart_contracts/my_contract/requests.py:240
+    // return user.bytes + lab_id.bytes + start.bytes + end.bytes
+    uncover 2
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    dup
+    // smart_contracts/my_contract/requests.py:91
+    // cost = 2500 + 400 * (9 + size_of(Request))
+    pushint 41700
+    swap
+    // smart_contracts/my_contract/requests.py:93-94
+    // # Caso in cui si crea una nuova richiesta
+    // if key not in self.slots:
+    pushbytes 0x6f
+    swap
+    concat
+    box_len
+    bury 1
+    bnz req_cost_after_if_else@3
+    // smart_contracts/my_contract/requests.py:95
+    // cost += 2500 + 400 * (1 + key.length + size_of(UInt64))
+    dig 1
+    len
+    pushint 9
+    +
+    pushint 400
+    *
+    pushint 44200
+    +
+    bury 1
+
+req_cost_after_if_else@3:
+    // smart_contracts/my_contract/requests.py:97
+    // return arc4.UInt64(cost)
+    dup
+    itob
+    // smart_contracts/my_contract/requests.py:73
+    // @arc4.abimethod(readonly=True)
+    bytec 6 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.requests.Requests.approve[routing]() -> void:
+approve:
+    intc_2 // 0
+    dupn 4
+    // smart_contracts/my_contract/requests.py:100
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    cover 2
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 3
+    dup
+    cover 3
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/my_contract/requests.py:111
+    // req = self._req(req_id.as_uint64())
+    uncover 2
+    btoi
+    dup
+    cover 3
+    callsub _req
+    dup
+    cover 3
+    // smart_contracts/my_contract/requests.py:112
+    // lab = self._lab(req.lab.as_uint64())
+    dup
+    extract 40 8
+    cover 3
+    dup
+    intc_3 // 40
+    extract_uint64
+    dup
+    cover 4
+    dup
+    callsub _lab
+    // smart_contracts/my_contract/requests.py:114
+    // self._owner(lab)
+    callsub _owner
+    // smart_contracts/my_contract/requests.py:116
+    // self._available(lab)
+    callsub _available
+    pop
+    // smart_contracts/my_contract/requests.py:117
+    // assert req.status == REQ_PENDING, "Richiesta non in attesa"
+    dig 1
+    extract 72 1
+    bytec_3 // 0x00
+    b==
+    assert // Richiesta non in attesa
+    // smart_contracts/my_contract/requests.py:118
+    // assert req.start > Global.latest_timestamp, \
+    dig 1
+    extract 48 8
+    dup
+    cover 5
+    global LatestTimestamp
+    itob
+    b>
+    // smart_contracts/my_contract/requests.py:118-119
+    // assert req.start > Global.latest_timestamp, \
+    //     "Intervallo gia iniziato"
+    assert // Intervallo gia iniziato
+    // smart_contracts/my_contract/requests.py:121
+    // req = self._insert(req, prev_id.as_uint64(), next_id.as_uint64())
+    uncover 3
+    btoi
+    dup
+    cover 4
+    uncover 3
+    btoi
+    cover 3
+    // smart_contracts/my_contract/schedule.py:26
+    // lab = self._lab(req.lab.as_uint64())
+    swap
+    callsub _lab
+    cover 2
+    // smart_contracts/my_contract/schedule.py:27
+    // assert req.id != prev_id and req.id != next_id, "Vicino non valido"
+    swap
+    extract 0 8
+    dup
+    uncover 2
+    itob
+    dup
+    cover 2
+    b!=
+    bz approve_bool_false@4
+    dig 3
+    itob
+    dig 2
+    b!=
+    bz approve_bool_false@4
+    intc_0 // 1
+
+approve_bool_merge@5:
+    // smart_contracts/my_contract/schedule.py:27
+    // assert req.id != prev_id and req.id != next_id, "Vicino non valido"
+    assert // Vicino non valido
+    // smart_contracts/my_contract/schedule.py:29
+    // if prev_id:
+    dig 4
+    bz approve_else_body@15
+    // smart_contracts/my_contract/schedule.py:30
+    // prev = self._req(prev_id)
+    dig 4
+    callsub _req
+    dup
+    bury 14
+    // smart_contracts/my_contract/schedule.py:31
+    // assert prev.lab == req.lab, "Laboratorio del vicino errato"
+    dup
+    extract 40 8
+    dig 9
+    b==
+    assert // Laboratorio del vicino errato
+    // smart_contracts/my_contract/schedule.py:33
+    // assert prev.status == REQ_APPROVED or \
+    extract 72 1
+    dup
+    bury 17
+    bytec_0 // 0x01
+    b==
+    // smart_contracts/my_contract/schedule.py:33-34
+    // assert prev.status == REQ_APPROVED or \
+    //         prev.status == REQ_CONSUMED, \
+    bnz approve_bool_true@8
+    // smart_contracts/my_contract/schedule.py:34
+    // prev.status == REQ_CONSUMED, \
+    dig 15
+    bytec 8 // 0x05
+    b==
+    // smart_contracts/my_contract/schedule.py:33-34
+    // assert prev.status == REQ_APPROVED or \
+    //         prev.status == REQ_CONSUMED, \
+    bz approve_bool_false@9
+
+approve_bool_true@8:
+    intc_0 // 1
+
+approve_bool_merge@10:
+    // smart_contracts/my_contract/schedule.py:33-35
+    // assert prev.status == REQ_APPROVED or \
+    //         prev.status == REQ_CONSUMED, \
+    //             "Vicino non prenotato"
+    assert // Vicino non prenotato
+    // smart_contracts/my_contract/schedule.py:37
+    // assert prev.next == next_id, \
+    dig 12
+    dup
+    extract 81 8
+    dig 5
+    itob
+    b==
+    // smart_contracts/my_contract/schedule.py:37-38
+    // assert prev.next == next_id, \
+    //     "Vicini non consecutivi"
+    assert // Vicini non consecutivi
+    // smart_contracts/my_contract/schedule.py:39
+    // assert prev.end <= req.start or prev.end <= Global.latest_timestamp, \
+    extract 56 8
+    dup
+    bury 16
+    dig 6
+    b<=
+    bnz approve_bool_true@12
+    global LatestTimestamp
+    itob
+    dig 15
+    b>=
+    bz approve_bool_false@13
+
+approve_bool_true@12:
+    intc_0 // 1
+
+approve_bool_merge@14:
+    // smart_contracts/my_contract/schedule.py:39-40
+    // assert prev.end <= req.start or prev.end <= Global.latest_timestamp, \
+    //     "Intervalli sovrapposti"
+    assert // Intervalli sovrapposti
+    // smart_contracts/my_contract/schedule.py:42
+    // prev.next = req.id
+    dig 12
+    dig 2
+    replace2 81
+    // smart_contracts/my_contract/schedule.py:44-45
+    // # Aggiornamento della lista
+    // self.reqs[prev_id] = prev.copy()
+    bytec_1 // 0x72
+    dig 2
+    concat
+    swap
+    box_put
+
+approve_after_if_else@16:
+    // smart_contracts/my_contract/schedule.py:53
+    // if next_id:
+    dig 3
+    bz approve_after_if_else@22
+    // smart_contracts/my_contract/schedule.py:54-55
+    // # Caso non fosse l'ultimo della lista
+    // following = self._req(next_id)
+    dig 3
+    callsub _req
+    dup
+    bury 15
+    // smart_contracts/my_contract/schedule.py:56
+    // assert following.lab == req.lab, "Laboratorio del vicino errato"
+    dup
+    extract 40 8
+    dig 9
+    b==
+    assert // Laboratorio del vicino errato
+    // smart_contracts/my_contract/schedule.py:58
+    // assert following.status == REQ_APPROVED or \
+    extract 72 1
+    dup
+    bury 18
+    bytec_0 // 0x01
+    b==
+    // smart_contracts/my_contract/schedule.py:58-59
+    // assert following.status == REQ_APPROVED or \
+    //         following.status == REQ_CONSUMED, \
+    bnz approve_bool_true@19
+    // smart_contracts/my_contract/schedule.py:59
+    // following.status == REQ_CONSUMED, \
+    dig 16
+    bytec 8 // 0x05
+    b==
+    // smart_contracts/my_contract/schedule.py:58-59
+    // assert following.status == REQ_APPROVED or \
+    //         following.status == REQ_CONSUMED, \
+    bz approve_bool_false@20
+
+approve_bool_true@19:
+    intc_0 // 1
+
+approve_bool_merge@21:
+    // smart_contracts/my_contract/schedule.py:58-60
+    // assert following.status == REQ_APPROVED or \
+    //         following.status == REQ_CONSUMED, \
+    //             "Vicino non prenotato"
+    assert // Vicino non prenotato
+    // smart_contracts/my_contract/schedule.py:62
+    // assert following.prev == prev_id, "Vicini non consecutivi"
+    dig 13
+    dup
+    extract 73 8
+    dig 2
+    b==
+    assert // Vicini non consecutivi
+    // smart_contracts/my_contract/schedule.py:63
+    // assert req.end <= following.start, "Intervalli sovrapposti"
+    dig 9
+    extract 56 8
+    dig 1
+    extract 48 8
+    b<=
+    assert // Intervalli sovrapposti
+    // smart_contracts/my_contract/schedule.py:65-66
+    // #Aggiornamento della lista
+    // following.prev = req.id
+    dig 2
+    replace2 73
+    // smart_contracts/my_contract/schedule.py:67
+    // self.reqs[next_id] = following.copy()
+    dig 4
+    itob
+    bytec_1 // 0x72
+    swap
+    concat
+    swap
+    box_put
+
+approve_after_if_else@22:
+    // smart_contracts/my_contract/schedule.py:69
+    // req.prev = arc4.UInt64(prev_id)
+    dig 8
+    dig 12
+    replace2 73
+    // smart_contracts/my_contract/schedule.py:70
+    // req.next = arc4.UInt64(next_id)
+    dig 11
+    replace2 81
+    // smart_contracts/my_contract/requests.py:122
+    // req.status = arc4.UInt8(REQ_APPROVED)
+    bytec_0 // 0x01
+    replace2 72
+    // smart_contracts/my_contract/requests.py:123
+    // self.reqs[req_id.as_uint64()] = req.copy()
+    dig 10
+    itob
+    bytec_1 // 0x72
+    swap
+    concat
+    swap
+    box_put
+    // smart_contracts/my_contract/requests.py:100
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+approve_bool_false@20:
+    intc_2 // 0
+    b approve_bool_merge@21
+
+approve_bool_false@13:
+    intc_2 // 0
+    b approve_bool_merge@14
+
+approve_bool_false@9:
+    intc_2 // 0
+    b approve_bool_merge@10
+
+approve_else_body@15:
+    // smart_contracts/my_contract/schedule.py:48-49
+    // # Inserimento in testa all'elenco
+    // assert lab.head == next_id, "Inizio elenco non valido"
+    dig 2
+    dup
+    extract 49 8
+    dig 5
+    itob
+    b==
+    assert // Inizio elenco non valido
+    // smart_contracts/my_contract/schedule.py:50
+    // lab.head = req.id
+    dig 2
+    replace2 49
+    // smart_contracts/my_contract/schedule.py:51
+    // self.labs[req.lab.as_uint64()] = lab.copy()
+    dig 7
+    itob
+    bytec_2 // 0x6c
+    swap
+    concat
+    swap
+    box_put
+    b approve_after_if_else@16
+
+approve_bool_false@4:
+    intc_2 // 0
+    b approve_bool_merge@5
+
+
+// smart_contracts.my_contract.requests.Requests.reject[routing]() -> void:
+reject:
+    // smart_contracts/my_contract/requests.py:126
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/my_contract/requests.py:135
+    // req = self._req(req_id.as_uint64())
+    btoi
+    dup
+    callsub _req
+    // smart_contracts/my_contract/requests.py:136
+    // self._owner(self._lab(req.lab.as_uint64()))
+    dup
+    intc_3 // 40
+    extract_uint64
+    callsub _lab
+    callsub _owner
+    pop
+    // smart_contracts/my_contract/requests.py:137
+    // assert req.status == REQ_PENDING, "Richiesta non in attesa"
+    dup
+    extract 72 1
+    bytec_3 // 0x00
+    b==
+    assert // Richiesta non in attesa
+    // smart_contracts/my_contract/requests.py:138
+    // req.status = arc4.UInt8(REQ_REJECTED)
+    pushbytes 0x02
+    replace2 72
+    // smart_contracts/my_contract/requests.py:139
+    // self.reqs[req_id.as_uint64()] = req.copy()
+    swap
+    itob
+    bytec_1 // 0x72
+    swap
+    concat
+    swap
+    box_put
+    // smart_contracts/my_contract/requests.py:126
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.requests.Requests.revoke[routing]() -> void:
+revoke:
+    // smart_contracts/my_contract/requests.py:142
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/my_contract/requests.py:151
+    // req = self._req(req_id.as_uint64())
+    btoi
+    dup
+    callsub _req
+    // smart_contracts/my_contract/requests.py:152
+    // self._owner(self._lab(req.lab.as_uint64()))
+    dup
+    intc_3 // 40
+    extract_uint64
+    callsub _lab
+    callsub _owner
+    pop
+    // smart_contracts/my_contract/requests.py:153
+    // assert req.status == REQ_APPROVED, "Richiesta non approvata"
+    dup
+    extract 72 1
+    bytec_0 // 0x01
+    b==
+    assert // Richiesta non approvata
+    // smart_contracts/my_contract/requests.py:155
+    // req = self._remove(req)
+    callsub _remove
+    pop
+    // smart_contracts/my_contract/requests.py:156
+    // req.status = arc4.UInt8(REQ_REVOKED)
+    pushbytes 0x03
+    replace2 72
+    // smart_contracts/my_contract/requests.py:157
+    // self.reqs[req_id.as_uint64()] = req.copy()
+    swap
+    itob
+    bytec_1 // 0x72
+    swap
+    concat
+    swap
+    box_put
+    // smart_contracts/my_contract/requests.py:142
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.requests.Requests.use[routing]() -> void:
+use:
+    // smart_contracts/my_contract/requests.py:160
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/my_contract/requests.py:168
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/requests.py:169
+    // req = self._req(req_id.as_uint64())
+    btoi
+    dup
+    callsub _req
+    // smart_contracts/my_contract/requests.py:170
+    // lab = self._lab(req.lab.as_uint64())
+    dup
+    intc_3 // 40
+    extract_uint64
+    callsub _lab
+    // smart_contracts/my_contract/requests.py:172
+    // assert Txn.sender == req.user.native, \
+    txn Sender
+    dig 2
+    extract 8 32
+    ==
+    // smart_contracts/my_contract/requests.py:172-173
+    // assert Txn.sender == req.user.native, \
+    //     "Utente non autorizzato"
+    assert // Utente non autorizzato
+    // smart_contracts/my_contract/requests.py:174
+    // self._available(lab)
+    callsub _available
+    pop
+    // smart_contracts/my_contract/requests.py:175
+    // assert req.status == REQ_APPROVED, "Richiesta non approvata"
+    dup
+    extract 72 1
+    bytec_0 // 0x01
+    b==
+    assert // Richiesta non approvata
+    // smart_contracts/my_contract/requests.py:176
+    // assert req.start <= Global.latest_timestamp, \
+    dup
+    extract 48 8
+    global LatestTimestamp
+    itob
+    b<=
+    // smart_contracts/my_contract/requests.py:176-177
+    // assert req.start <= Global.latest_timestamp, \
+    //     "Intervallo non iniziato"
+    assert // Intervallo non iniziato
+    // smart_contracts/my_contract/requests.py:178
+    // assert req.end > Global.latest_timestamp, \
+    dup
+    extract 56 8
+    global LatestTimestamp
+    itob
+    b>
+    // smart_contracts/my_contract/requests.py:178-179
+    // assert req.end > Global.latest_timestamp, \
+    //     "Richiesta scaduta"
+    assert // Richiesta scaduta
+    // smart_contracts/my_contract/requests.py:181
+    // req.status = arc4.UInt8(REQ_CONSUMED)
+    bytec 8 // 0x05
+    replace2 72
+    // smart_contracts/my_contract/requests.py:182
+    // self.reqs[req_id.as_uint64()] = req.copy()
+    swap
+    itob
+    bytec_1 // 0x72
+    swap
+    concat
+    swap
+    box_put
+    // smart_contracts/my_contract/requests.py:160
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.requests.Requests.expire[routing]() -> void:
+expire:
+    // smart_contracts/my_contract/requests.py:185
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/my_contract/requests.py:193
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/requests.py:194
+    // req = self._req(req_id.as_uint64())
+    btoi
+    dup
+    callsub _req
+    dup
+    // smart_contracts/my_contract/requests.py:195
+    // assert Txn.sender == req.user.native, \
+    txn Sender
+    dig 1
+    extract 8 32
+    ==
+    // smart_contracts/my_contract/requests.py:195-196
+    // assert Txn.sender == req.user.native, \
+    //     "Utente non autorizzato"
+    assert // Utente non autorizzato
+    // smart_contracts/my_contract/requests.py:197
+    // assert req.end <= Global.latest_timestamp, \
+    dup
+    extract 56 8
+    global LatestTimestamp
+    itob
+    b<=
+    // smart_contracts/my_contract/requests.py:197-198
+    // assert req.end <= Global.latest_timestamp, \
+    //     "Richiesta non scaduta"
+    assert // Richiesta non scaduta
+    // smart_contracts/my_contract/requests.py:200
+    // if req.status == REQ_APPROVED:
+    extract 72 1
+    dup
+    bytec_0 // 0x01
+    b==
+    bz expire_else_body@3
+    // smart_contracts/my_contract/requests.py:201
+    // req = self._remove(req)
+    dig 1
+    callsub _remove
+    pop
+    bury 2
+
+expire_after_if_else@6:
+    // smart_contracts/my_contract/requests.py:205
+    // req.status = arc4.UInt8(REQ_EXPIRED)
+    dig 1
+    pushbytes 0x04
+    replace2 72
+    // smart_contracts/my_contract/requests.py:206
+    // self.reqs[req_id.as_uint64()] = req.copy()
+    dig 3
+    itob
+    bytec_1 // 0x72
+    swap
+    concat
+    swap
+    box_put
+
+expire_after_inlined_smart_contracts.my_contract.requests.Requests.expire@7:
+    // smart_contracts/my_contract/requests.py:185
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+expire_else_body@3:
+    // smart_contracts/my_contract/requests.py:202
+    // elif req.status != REQ_PENDING:
+    dup
+    bytec_3 // 0x00
+    b!=
+    bnz expire_after_inlined_smart_contracts.my_contract.requests.Requests.expire@7
+    b expire_after_if_else@6
+
+
+// smart_contracts.my_contract.requests.Requests.get_req[routing]() -> void:
+get_req:
+    // smart_contracts/my_contract/requests.py:209
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/my_contract/requests.py:219
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/requests.py:220
+    // return self._req(req_id.as_uint64())
+    btoi
+    callsub _req
+    // smart_contracts/my_contract/requests.py:209
+    // @arc4.abimethod(readonly=True)
+    bytec 6 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.labs.Labs.register_lab[routing]() -> void:
+register_lab:
+    // smart_contracts/my_contract/labs.py:14
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txn GroupIndex
+    intc_0 // 1
+    -
+    dup
+    gtxns TypeEnum
+    intc_0 // pay
+    ==
+    assert // transaction type is pay
+    // smart_contracts/my_contract/labs.py:27
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/labs.py:29
+    // assert lab_id.as_uint64() not in self.labs,\
+    dig 1
+    btoi
+    itob
+    bytec_2 // 0x6c
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    !
+    // smart_contracts/my_contract/labs.py:29-30
+    // assert lab_id.as_uint64() not in self.labs,\
+    //     "Laboratorio gia registrato"
+    assert // Laboratorio gia registrato
+    // smart_contracts/my_contract/labs.py:32
+    // prev_min_balance = Global.current_application_address.min_balance
+    global CurrentApplicationAddress
+    acct_params_get AcctMinBalance
+    assert // account funded
+    // smart_contracts/my_contract/labs.py:35
+    // lab_id, arc4.Address(Txn.sender), arc4.UInt64(0),
+    txn Sender
+    // smart_contracts/my_contract/labs.py:34-37
+    // self.labs[lab_id.as_uint64()] = Lab(
+    //     lab_id, arc4.Address(Txn.sender), arc4.UInt64(0),
+    //     arc4.UInt8(LAB_INACTIVE), arc4.UInt64(0), arc4.UInt8(LAB_PENDING),
+    // )
+    uncover 4
+    swap
+    concat
+    pushbytes 0x000000000000000000000000000000000000
+    concat
+    uncover 2
+    swap
+    box_put
+    // smart_contracts/my_contract/labs.py:39-40
+    // # Controlla i dati del pagamento
+    // self._pay(pay, Global.current_application_address.min_balance - prev_min_balance)
+    global CurrentApplicationAddress
+    acct_params_get AcctMinBalance
+    assert // account funded
+    swap
+    -
+    callsub _pay
+    // smart_contracts/my_contract/labs.py:14
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.labs.Labs.lab_cost[routing]() -> void:
+lab_cost:
+    // smart_contracts/my_contract/labs.py:50
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/labs.py:42
+    // @arc4.abimethod(readonly=True)
+    pushbytes 0x151f7c750000000000007274
+    log
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.labs.Labs.review_lab[routing]() -> void:
+review_lab:
+    // smart_contracts/my_contract/labs.py:53
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_0 // 1
+    ==
+    assert // invalid number of bytes for arc4.bool
+    // smart_contracts/my_contract/labs.py:58
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/labs.py:59
+    // assert Txn.sender == self.admin, "Revisore non autorizzato"
+    txn Sender
+    intc_2 // 0
+    bytec 5 // "admin"
+    app_global_get_ex
+    assert // check self.admin exists
+    ==
+    assert // Revisore non autorizzato
+    // smart_contracts/my_contract/labs.py:61
+    // lab = self._lab(lab_id.as_uint64())
+    swap
+    btoi
+    dup
+    cover 2
+    callsub _lab
+    dup
+    cover 2
+    // smart_contracts/my_contract/labs.py:62
+    // assert lab.registration == LAB_PENDING, \
+    dup
+    extract 57 1
+    bytec_3 // 0x00
+    b==
+    // smart_contracts/my_contract/labs.py:62-63
+    // assert lab.registration == LAB_PENDING, \
+    //     "Registrazione gia valutata"
+    assert // Registrazione gia valutata
+    // smart_contracts/my_contract/labs.py:64
+    // assert Txn.sender != lab.admin.native, \
+    txn Sender
+    swap
+    extract 8 32
+    !=
+    // smart_contracts/my_contract/labs.py:64-65
+    // assert Txn.sender != lab.admin.native, \
+    //     "Autovalutazione non consentita"
+    assert // Autovalutazione non consentita
+    // smart_contracts/my_contract/labs.py:67
+    // if approved.native:
+    intc_2 // 0
+    getbit
+    bz review_lab_else_body@3
+    // smart_contracts/my_contract/labs.py:68
+    // lab.registration = arc4.UInt8(LAB_APPROVED)
+    bytec_0 // 0x01
+    replace2 57
+
+review_lab_after_if_else@4:
+    // smart_contracts/my_contract/labs.py:71
+    // self.labs[lab_id.as_uint64()] = lab.copy()
+    dig 1
+    itob
+    bytec_2 // 0x6c
+    swap
+    concat
+    swap
+    box_put
+    // smart_contracts/my_contract/labs.py:53
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+review_lab_else_body@3:
+    // smart_contracts/my_contract/labs.py:70
+    // lab.registration = arc4.UInt8(LAB_REJECTED)
+    pushbytes 0x02
+    replace2 57
+    b review_lab_after_if_else@4
+
+
+// smart_contracts.my_contract.labs.Labs.register_lock[routing]() -> void:
+register_lock:
+    // smart_contracts/my_contract/labs.py:73
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txn GroupIndex
+    intc_0 // 1
+    -
+    dup
+    gtxns TypeEnum
+    intc_0 // pay
+    ==
+    assert // transaction type is pay
+    // smart_contracts/my_contract/labs.py:80
+    // lab = self._lab(lab_id.as_uint64())
+    uncover 2
+    btoi
+    dup
+    callsub _lab
+    // smart_contracts/my_contract/labs.py:81
+    // self._owner(lab)
+    callsub _owner
+    // smart_contracts/my_contract/labs.py:82
+    // assert lab.lock_id == 0, \
+    dup
+    extract 40 8
+    bytec 4 // 0x0000000000000000
+    b==
+    // smart_contracts/my_contract/labs.py:82-83
+    // assert lab.lock_id == 0, \
+    //     "Laboratorio con serratura gia registrata"
+    assert // Laboratorio con serratura gia registrata
+    // smart_contracts/my_contract/labs.py:84
+    // assert lock_id > 0, \
+    dig 3
+    bytec 4 // 0x0000000000000000
+    b>
+    // smart_contracts/my_contract/labs.py:84-85
+    // assert lock_id > 0, \
+    //     "ID serratura non valido"
+    assert // ID serratura non valido
+    // smart_contracts/my_contract/labs.py:86
+    // assert lock_id.as_uint64() not in self.locks, \
+    dig 3
+    btoi
+    itob
+    pushbytes 0x6b
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    !
+    // smart_contracts/my_contract/labs.py:86-87
+    // assert lock_id.as_uint64() not in self.locks, \
+    //     "ID serratura gia assegnato"
+    assert // ID serratura gia assegnato
+    // smart_contracts/my_contract/labs.py:89
+    // prev_min_balance = Global.current_application_address.min_balance
+    global CurrentApplicationAddress
+    acct_params_get AcctMinBalance
+    assert // account funded
+    // smart_contracts/my_contract/labs.py:90
+    // lab.lock_id = lock_id
+    uncover 2
+    uncover 5
+    replace2 40
+    // smart_contracts/my_contract/labs.py:91
+    // self.labs[lab_id.as_uint64()] = lab.copy()
+    uncover 3
+    itob
+    bytec_2 // 0x6c
+    dig 1
+    concat
+    uncover 2
+    box_put
+    // smart_contracts/my_contract/labs.py:92
+    // self.locks[lock_id.as_uint64()] = lab_id.as_uint64()
+    uncover 2
+    swap
+    box_put
+    // smart_contracts/my_contract/labs.py:95
+    // Global.current_application_address.min_balance - prev_min_balance
+    global CurrentApplicationAddress
+    acct_params_get AcctMinBalance
+    assert // account funded
+    swap
+    -
+    // smart_contracts/my_contract/labs.py:93-96
+    // self._pay(
+    //     pay,
+    //     Global.current_application_address.min_balance - prev_min_balance
+    //     )
+    callsub _pay
+    // smart_contracts/my_contract/labs.py:73
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.labs.Labs.lock_cost[routing]() -> void:
+lock_cost:
+    // smart_contracts/my_contract/labs.py:103
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/labs.py:98
+    // @arc4.abimethod(readonly=True)
+    pushbytes 0x151f7c750000000000002454
+    log
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.labs.Labs.set_active[routing]() -> void:
+set_active:
+    // smart_contracts/my_contract/labs.py:106
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_0 // 1
+    ==
+    assert // invalid number of bytes for arc4.bool
+    // smart_contracts/my_contract/labs.py:115
+    // lab = self._lab(lab_id.as_uint64())
+    swap
+    btoi
+    dup
+    cover 2
+    callsub _lab
+    // smart_contracts/my_contract/labs.py:116
+    // self._owner(lab)
+    callsub _owner
+    swap
+    // smart_contracts/my_contract/labs.py:117
+    // if active.native:
+    intc_2 // 0
+    getbit
+    bz set_active_else_body@3
+    // smart_contracts/my_contract/labs.py:118
+    // assert lab.lock_id != 0, \
+    dup
+    extract 40 8
+    bytec 4 // 0x0000000000000000
+    b!=
+    // smart_contracts/my_contract/labs.py:118-119
+    // assert lab.lock_id != 0, \
+    //     "Serratura non registrata"
+    assert // Serratura non registrata
+    // smart_contracts/my_contract/labs.py:120
+    // lab.status = arc4.UInt8(LAB_ACTIVE)
+    bytec_0 // 0x01
+    replace2 48
+
+set_active_after_if_else@4:
+    // smart_contracts/my_contract/labs.py:123
+    // self.labs[lab_id.as_uint64()] = lab.copy()
+    dig 1
+    itob
+    bytec_2 // 0x6c
+    swap
+    concat
+    swap
+    box_put
+    // smart_contracts/my_contract/labs.py:106
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+set_active_else_body@3:
+    // smart_contracts/my_contract/labs.py:122
+    // lab.status = arc4.UInt8(LAB_INACTIVE)
+    bytec_3 // 0x00
+    replace2 48
+    b set_active_after_if_else@4
+
+
+// smart_contracts.my_contract.labs.Labs.get_lab[routing]() -> void:
+get_lab:
+    // smart_contracts/my_contract/labs.py:125
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/my_contract/labs.py:135
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/labs.py:136
+    // return self._lab(lab_id.as_uint64())
+    btoi
+    callsub _lab
+    // smart_contracts/my_contract/labs.py:125
+    // @arc4.abimethod(readonly=True)
+    bytec 6 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return
+
+
+// smart_contracts.my_contract.schedule.Schedule._remove(req: bytes) -> bytes, bytes:
+_remove:
+    // smart_contracts/my_contract/schedule.py:73-74
+    // @subroutine
+    // def _remove(self, req: Request) -> Request:
+    proto 1 2
+    intc_2 // 0
+    dup
+    // smart_contracts/my_contract/schedule.py:84
+    // lab = self._lab(req.lab.as_uint64())
+    frame_dig -1
+    extract 40 8
+    frame_dig -1
+    intc_3 // 40
+    extract_uint64
+    dup
+    callsub _lab
+    // smart_contracts/my_contract/schedule.py:86
+    // if req.prev:
+    frame_dig -1
+    extract 73 8
+    dup
+    pushbytes 0x
+    b!=
+    bz _remove_else_body@6
+    // smart_contracts/my_contract/schedule.py:88-89
+    // # Richiesta in mezzo all'elenco
+    // prev_req = self._req(req.prev.as_uint64())
+    frame_dig -1
+    // smart_contracts/my_contract/schedule.py:86
+    // if req.prev:
+    pushint 73
+    // smart_contracts/my_contract/schedule.py:88-89
+    // # Richiesta in mezzo all'elenco
+    // prev_req = self._req(req.prev.as_uint64())
+    extract_uint64
+    callsub _req
+    dup
+    frame_bury 1
+    // smart_contracts/my_contract/schedule.py:91
+    // assert prev_req.lab == req.lab and \
+    extract 40 8
+    frame_dig 2
+    b==
+    // smart_contracts/my_contract/schedule.py:91-92
+    // assert prev_req.lab == req.lab and \
+    //     prev_req.next == req.id, \
+    bz _remove_bool_false@4
+    // smart_contracts/my_contract/schedule.py:92
+    // prev_req.next == req.id, \
+    frame_dig 1
+    extract 81 8
+    frame_dig -1
+    extract 0 8
+    b==
+    // smart_contracts/my_contract/schedule.py:91-92
+    // assert prev_req.lab == req.lab and \
+    //     prev_req.next == req.id, \
+    bz _remove_bool_false@4
+    intc_0 // 1
+
+_remove_bool_merge@5:
+    // smart_contracts/my_contract/schedule.py:91-93
+    // assert prev_req.lab == req.lab and \
+    //     prev_req.next == req.id, \
+    //     "Collegamento non valido"
+    assert // Collegamento non valido
+    // smart_contracts/my_contract/schedule.py:95
+    // prev_req.next = req.next
+    frame_dig -1
+    extract 81 8
+    frame_dig 1
+    swap
+    replace2 81
+    // smart_contracts/my_contract/schedule.py:96
+    // self.reqs[prev_req.id.as_uint64()] = prev_req.copy()
+    dup
+    extract 0 8
+    bytec_1 // 0x72
+    swap
+    concat
+    swap
+    box_put
+
+_remove_after_if_else@7:
+    // smart_contracts/my_contract/schedule.py:104
+    // if req.next:
+    frame_dig -1
+    extract 81 8
+    pushbytes 0x
+    b!=
+    bz _remove_after_if_else@13
+    // smart_contracts/my_contract/schedule.py:105
+    // following = self._req(req.next.as_uint64())
+    frame_dig -1
+    // smart_contracts/my_contract/schedule.py:104
+    // if req.next:
+    pushint 81
+    // smart_contracts/my_contract/schedule.py:105
+    // following = self._req(req.next.as_uint64())
+    extract_uint64
+    callsub _req
+    dup
+    frame_bury 0
+    // smart_contracts/my_contract/schedule.py:106
+    // assert following.lab == req.lab \
+    extract 40 8
+    frame_dig 2
+    b==
+    // smart_contracts/my_contract/schedule.py:106-107
+    // assert following.lab == req.lab \
+    //     and following.prev == req.id, \
+    bz _remove_bool_false@11
+    // smart_contracts/my_contract/schedule.py:107
+    // and following.prev == req.id, \
+    frame_dig 0
+    extract 73 8
+    frame_dig -1
+    extract 0 8
+    b==
+    // smart_contracts/my_contract/schedule.py:106-107
+    // assert following.lab == req.lab \
+    //     and following.prev == req.id, \
+    bz _remove_bool_false@11
+    intc_0 // 1
+
+_remove_bool_merge@12:
+    // smart_contracts/my_contract/schedule.py:106-108
+    // assert following.lab == req.lab \
+    //     and following.prev == req.id, \
+    //     "Collegamento non valido"
+    assert // Collegamento non valido
+    // smart_contracts/my_contract/schedule.py:110
+    // following.prev = req.prev
+    frame_dig 0
+    frame_dig 5
+    replace2 73
+    // smart_contracts/my_contract/schedule.py:111
+    // self.reqs[following.id.as_uint64()] = following.copy()
+    dup
+    extract 0 8
+    bytec_1 // 0x72
+    swap
+    concat
+    swap
+    box_put
+
+_remove_after_if_else@13:
+    // smart_contracts/my_contract/schedule.py:113
+    // req.prev = arc4.UInt64(0)
+    frame_dig -1
+    bytec 4 // 0x0000000000000000
+    replace2 73
+    dup
+    frame_bury -1
+    // smart_contracts/my_contract/schedule.py:114
+    // req.next = arc4.UInt64(0)
+    bytec 4 // 0x0000000000000000
+    replace2 81
+    dupn 2
+    frame_bury -1
+    // smart_contracts/my_contract/schedule.py:115
+    // return req.copy()
+    frame_bury 1
+    frame_bury 0
+    retsub
+
+_remove_bool_false@11:
+    intc_2 // 0
+    b _remove_bool_merge@12
+
+_remove_bool_false@4:
+    intc_2 // 0
+    b _remove_bool_merge@5
+
+_remove_else_body@6:
+    // smart_contracts/my_contract/schedule.py:99-100
+    // # Richiesta in testa all'elenco
+    // assert lab.head == req.id, "Inizio elenco non valido"
+    frame_dig 4
+    dup
+    extract 49 8
+    frame_dig -1
+    extract 0 8
+    b==
+    assert // Inizio elenco non valido
+    // smart_contracts/my_contract/schedule.py:101
+    // lab.head = req.next
+    frame_dig -1
+    extract 81 8
+    replace2 49
+    // smart_contracts/my_contract/schedule.py:102
+    // self.labs[req.lab.as_uint64()] = lab.copy()
+    frame_dig 3
+    itob
+    bytec_2 // 0x6c
+    swap
+    concat
+    swap
+    box_put
+    b _remove_after_if_else@7
+
+
+// smart_contracts.my_contract.storage.Storage._guard() -> void:
+_guard:
+    // smart_contracts/my_contract/storage.py:37
+    // assert Txn.rekey_to == Global.zero_address, "Rekey non consentito"
+    txn RekeyTo
+    global ZeroAddress
+    ==
+    assert // Rekey non consentito
+    retsub
+
+
+// smart_contracts.my_contract.storage.Storage._pay(pay: uint64, cost: uint64) -> void:
+_pay:
+    // smart_contracts/my_contract/storage.py:39-40
+    // @subroutine
+    // def _pay(self, pay: gtxn.PaymentTransaction, cost: UInt64) -> None:
+    proto 2 0
+    // smart_contracts/my_contract/storage.py:48
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/storage.py:50
+    // assert Global.group_size == 2, "Gruppo non valido"
+    global GroupSize
+    pushint 2
+    ==
+    assert // Gruppo non valido
+    // smart_contracts/my_contract/storage.py:51
+    // assert Txn.group_index == 1, "Chiamata fuori posizione"
+    txn GroupIndex
+    intc_0 // 1
+    ==
+    assert // Chiamata fuori posizione
+    // smart_contracts/my_contract/storage.py:52
+    // assert pay.group_index == 0, "Pagamento fuori posizione"
+    frame_dig -2
+    gtxns GroupIndex
+    !
+    assert // Pagamento fuori posizione
+    // smart_contracts/my_contract/storage.py:53
+    // assert pay.sender == Txn.sender, \
+    frame_dig -2
+    gtxns Sender
+    txn Sender
+    ==
+    // smart_contracts/my_contract/storage.py:53-54
+    // assert pay.sender == Txn.sender, \
+    //     "Pagante diverso dal mittente"
+    assert // Pagante diverso dal mittente
+    // smart_contracts/my_contract/storage.py:55
+    // assert pay.receiver == Global.current_application_address, \
+    frame_dig -2
+    gtxns Receiver
+    global CurrentApplicationAddress
+    ==
+    // smart_contracts/my_contract/storage.py:55-56
+    // assert pay.receiver == Global.current_application_address, \
+    //     "Destinatario errato"
+    assert // Destinatario errato
+    // smart_contracts/my_contract/storage.py:57
+    // assert pay.amount == cost, "Importo non esatto"
+    frame_dig -2
+    gtxns Amount
+    frame_dig -1
+    ==
+    assert // Importo non esatto
+    // smart_contracts/my_contract/storage.py:59
+    // assert pay.rekey_to == Global.zero_address, "Rekey del pagamento non consentito"
+    frame_dig -2
+    gtxns RekeyTo
+    global ZeroAddress
+    ==
+    assert // Rekey del pagamento non consentito
+    // smart_contracts/my_contract/storage.py:60
+    // assert pay.close_remainder_to == Global.zero_address, "Chiusura non consentita"
+    frame_dig -2
+    gtxns CloseRemainderTo
+    global ZeroAddress
+    ==
+    assert // Chiusura non consentita
+    // smart_contracts/my_contract/storage.py:61
+    // assert Global.current_application_address.balance >= Global.current_application_address.min_balance, "Saldo applicazione insufficiente"
+    global CurrentApplicationAddress
+    acct_params_get AcctBalance
+    assert // account funded
+    global CurrentApplicationAddress
+    acct_params_get AcctMinBalance
+    assert // account funded
+    >=
+    assert // Saldo applicazione insufficiente
+    retsub
+
+
+// smart_contracts.my_contract.storage.Storage._lab(lab_id: uint64) -> bytes:
+_lab:
+    // smart_contracts/my_contract/storage.py:63-64
+    // @subroutine
+    // def _lab(self, lab_id: UInt64) -> Lab:
+    proto 1 1
+    // smart_contracts/my_contract/storage.py:73
+    // assert lab_id in self.labs, "Laboratorio inesistente"
+    frame_dig -1
+    itob
+    bytec_2 // 0x6c
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Laboratorio inesistente
+    // smart_contracts/my_contract/storage.py:74
+    // return self.labs[lab_id].copy()
+    box_get
+    pop
+    retsub
+
+
+// smart_contracts.my_contract.storage.Storage._req(req_id: uint64) -> bytes:
+_req:
+    // smart_contracts/my_contract/storage.py:76-77
+    // @subroutine
+    // def _req(self, req_id: UInt64) -> Request:
+    proto 1 1
+    // smart_contracts/my_contract/storage.py:86
+    // assert req_id in self.reqs, "Richiesta inesistente"
+    frame_dig -1
+    itob
+    bytec_1 // 0x72
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Richiesta inesistente
+    // smart_contracts/my_contract/storage.py:87
+    // return self.reqs[req_id].copy()
+    box_get
+    pop
+    retsub
+
+
+// smart_contracts.my_contract.storage.Storage._owner(lab: bytes) -> bytes:
+_owner:
+    // smart_contracts/my_contract/storage.py:89-90
+    // @subroutine
+    // def _owner(self, lab: Lab) -> None:
+    proto 1 1
+    // smart_contracts/my_contract/storage.py:97
+    // self._guard()
+    callsub _guard
+    // smart_contracts/my_contract/storage.py:98
+    // assert lab.registration == LAB_APPROVED, \
+    frame_dig -1
+    extract 57 1
+    bytec_0 // 0x01
+    b==
+    // smart_contracts/my_contract/storage.py:98-99
+    // assert lab.registration == LAB_APPROVED, \
+    //     "Registrazione non approvata"
+    assert // Registrazione non approvata
+    // smart_contracts/my_contract/storage.py:100
+    // assert Txn.sender == lab.admin.native, \
+    txn Sender
+    frame_dig -1
+    extract 8 32
+    ==
+    // smart_contracts/my_contract/storage.py:100-101
+    // assert Txn.sender == lab.admin.native, \
+    //     "Amministratore non autorizzato"
+    assert // Amministratore non autorizzato
+    frame_dig -1
+    retsub
+
+
+// smart_contracts.my_contract.storage.Storage._available(lab: bytes) -> bytes:
+_available:
+    // smart_contracts/my_contract/storage.py:103-104
+    // @subroutine
+    // def _available(self, lab: Lab) -> None:
+    proto 1 1
+    // smart_contracts/my_contract/storage.py:108
+    // assert lab.registration == LAB_APPROVED, "Registrazione non approvata"
+    frame_dig -1
+    extract 57 1
+    bytec_0 // 0x01
+    b==
+    assert // Registrazione non approvata
+    // smart_contracts/my_contract/storage.py:109
+    // assert lab.status == LAB_ACTIVE, "Laboratorio inattivo"
+    frame_dig -1
+    extract 48 1
+    bytec_0 // 0x01
+    b==
+    assert // Laboratorio inattivo
+    // smart_contracts/my_contract/storage.py:110
+    // assert lab.lock_id != 0, "Serratura non registrata"
+    frame_dig -1
+    extract 40 8
+    bytec 4 // 0x0000000000000000
+    b!=
+    assert // Serratura non registrata
+    frame_dig -1
+    retsub
